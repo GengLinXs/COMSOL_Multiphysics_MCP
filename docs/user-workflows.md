@@ -24,7 +24,7 @@ activate the Shishvan workflow.
 | Nonlocal Ztip iteration | That model is active and nonlocal dislocation-density/impedance self-consistency is required |
 | MATLAB LiveLink | The actual execution path uses MATLAB; existing custom solvers must be verified before `runAll()` |
 | Paper-specific postprocessing | Reproducing that paper's plots, void-nucleation criterion or project checkpoints |
-| Electrothermal calibration and runtime lessons | Standalone HeatTransfer startup, final-solution selection, post-solve operators, export audits, or explicitly requested P2D thermal/DC-temperature/constant-power calibration; use the per-item gates in the new reference |
+| Electrothermal calibration and runtime lessons | Standalone HeatTransfer startup, solution/dataset maintenance, pulse-switch integration, temperature-input tracing, or explicitly requested P2D thermal/DC-temperature/constant-power calibration and component reduction; use the per-item gates in the reference |
 
 The Chinese execution checklist contains the complete conditions and all 48
 points. Paper parameters, solver scales, tolerances, geometry and historical
@@ -45,6 +45,16 @@ PDF embedding dependencies or a vector index. The source documents retain
 historical examples and caveats; example license servers are replaced with
 placeholders for publication. Verify paths, COMSOL API types, dimensions, units,
 license availability and actual model selections on the current installation.
+
+The electrothermal reference also covers unsolved temperature fields still
+supplied by active couplings, model-input override scope, authorized component
+reduction, surface-specific versus whole-cell resistance, actual integration
+steps at pulse switches, dependent initialization/storage solutions, and
+cascading dataset removal. These are conditional diagnostics, not automatic
+model rewrites or universal solver settings. Pulse verification includes the
+switching window; representative initial-state checks are distinguished from
+full protocol replay. Research data and calibrated parameter values are not
+included in this guidance.
 
 ## Optional local documents and environment
 
