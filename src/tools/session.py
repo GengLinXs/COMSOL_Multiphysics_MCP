@@ -8,6 +8,7 @@ from mcp.server import Server
 from mcp.server.fastmcp import FastMCP
 import mph
 import mph.session as mph_session
+from ..utils.jvm_compat import standalone_jvm_compatibility
 
 
 class SessionManager:
@@ -77,7 +78,8 @@ class SessionManager:
                 kwargs = {"cores": cores, "version": version}
                 if products:
                     kwargs["products"] = products
-                self._client = mph.Client(**{k: v for k, v in kwargs.items() if v is not None})
+                with standalone_jvm_compatibility():
+                    self._client = mph.Client(**{k: v for k, v in kwargs.items() if v is not None})
                 return {
                     "success": True,
                     "version": self._client.version,

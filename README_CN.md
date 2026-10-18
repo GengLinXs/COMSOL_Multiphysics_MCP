@@ -12,6 +12,9 @@
 仅在对应任务触发，不能作为其他模型的默认设置。
 配置、适用边界与验证说明见 [用户工作流文档](docs/user-workflows.md)。
 
+已进一步集成独立 MPh 的 HeatTransfer/SLF4J 启动兼容、末端结果选择、
+显式 `solution_update` 解刷新、保存格式校验，以及按条件唤起的电热标定经验。
+
 ## ⭐ Star History
 
 [![GitHub stars](https://img.shields.io/github/stars/wjc9011/COMSOL_Multiphysics_MCP?style=social)](https://github.com/wjc9011/COMSOL_Multiphysics_MCP/stargazers)

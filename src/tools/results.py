@@ -7,6 +7,37 @@ from mcp.server.fastmcp import FastMCP
 from .session import session_manager
 
 
+def _dataset_name(model, dataset):
+    """Resolve the actual COMSOL default, working around MPh 1.4 inner(None)."""
+    if dataset is not None:
+        return dataset
+    evaluation = (model / "evaluations").create("Eval")
+    try:
+        tag = str(evaluation.property("data"))
+    finally:
+        evaluation.remove()
+    for node in model / "datasets":
+        if str(node.tag()) == tag:
+            return str(node.name())
+    raise ValueError("Could not determine default dataset; specify one explicitly.")
+
+
+def _solution_index(model, selection, dataset, outer=False):
+    """Resolve aliases to real numeric indices rather than Java solnum strings."""
+    if isinstance(selection, str):
+        if selection not in {"first", "last", "end"}:
+            raise ValueError("Solution selection must be numeric, first, last, or end.")
+        indices, _ = model.outer(dataset) if outer else model.inner(dataset)
+        if len(indices) == 0:
+            raise ValueError("The selected dataset has no solution indices.")
+        selection = int(indices[0] if selection == "first" else indices[-1])
+    # MPh 1.4 accepts numeric inner indices only as a list/array, but outer
+    # as a scalar integer. Avoid an apparent fix that still fails real MPh.
+    if not outer and isinstance(selection, int):
+        return [selection]
+    return selection
+
+
 def register_results_tools(mcp: FastMCP) -> None:
     """Register results tools with the MCP server."""
     
@@ -16,7 +47,7 @@ def register_results_tools(mcp: FastMCP) -> None:
         unit: Optional[str] = None,
         dataset: Optional[str] = None,
         inner: Optional[Union[int, str, Sequence[int]]] = None,
-        outer: Optional[Union[int, Sequence[int]]] = None,
+        outer: Optional[Union[int, str, Sequence[int]]] = None,
         model_name: Optional[str] = None
     ) -> dict:
         """
@@ -41,6 +72,9 @@ def register_results_tools(mcp: FastMCP) -> None:
             }
         
         try:
+            dataset = _dataset_name(model, dataset)
+            inner = _solution_index(model, inner, dataset)
+            outer = _solution_index(model, outer, dataset, outer=True)
             result = model.evaluate(
                 expression,
                 unit=unit,
@@ -65,6 +99,8 @@ def register_results_tools(mcp: FastMCP) -> None:
                 "expression": expression,
                 "unit": unit,
                 "dataset": dataset,
+                "inner": inner,
+                "outer": outer,
                 "value": value,
                 "shape": getattr(result, 'shape', None),
             }
@@ -76,10 +112,16 @@ def register_results_tools(mcp: FastMCP) -> None:
         expression: str,
         unit: Optional[str] = None,
         dataset: Optional[str] = None,
-        model_name: Optional[str] = None
+        model_name: Optional[str] = None,
+        inner: Optional[Union[int, str, Sequence[int]]] = None,
+        outer: Optional[Union[int, str, Sequence[int]]] = None,
     ) -> dict:
         """
-        Evaluate a global expression (returns a single scalar value).
+        Evaluate a scalar on an explicitly selected solution.
+
+        Use inner='last'/'end' for final time and outer='last' for the final
+        parameter point. Multiple returned values are reported as an error;
+        this tool never silently takes the first time/parameter/field value.
         
         Common global expressions include:
         - Integration: "intop1(T)" where intop1 is an integration operator
@@ -103,18 +145,27 @@ def register_results_tools(mcp: FastMCP) -> None:
             }
         
         try:
-            result = model.evaluate(expression, unit=unit, dataset=dataset)
+            dataset = _dataset_name(model, dataset)
+            inner = _solution_index(model, inner, dataset)
+            outer = _solution_index(model, outer, dataset, outer=True)
+            result = model.evaluate(expression, unit=unit, dataset=dataset, inner=inner, outer=outer)
             
             import numpy as np
-            if isinstance(result, np.ndarray):
-                value = float(result.flatten()[0])
-            else:
-                value = float(result)
+            values = np.asarray(result)
+            if values.size != 1:
+                return {"success": False, "error": "Expression returned multiple values. Select inner/outer explicitly or use results_evaluate.",
+                        "shape": list(values.shape), "count": int(values.size), "dataset": dataset}
+            value = float(values.reshape(-1)[0])
+            if not np.isfinite(value):
+                return {"success": False, "error": "Expression returned a non-finite value.", "dataset": dataset}
             
             return {
                 "success": True,
                 "expression": expression,
                 "unit": unit,
+                "dataset": dataset,
+                "inner": inner,
+                "outer": outer,
                 "value": value,
             }
         except Exception as e:
@@ -143,6 +194,7 @@ def register_results_tools(mcp: FastMCP) -> None:
             }
         
         try:
+            dataset = _dataset_name(model, dataset)
             indices, values = model.inner(dataset)
             
             return {
@@ -178,6 +230,7 @@ def register_results_tools(mcp: FastMCP) -> None:
             }
         
         try:
+            dataset = _dataset_name(model, dataset)
             indices, values = model.outer(dataset)
             
             return {

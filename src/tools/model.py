@@ -227,6 +227,20 @@ def register_model_tools(mcp: FastMCP) -> None:
             }
         
         try:
+            if file_path:
+                suffix = Path(file_path).suffix.lower()
+                formats = {"comsol": ".mph", "mph": ".mph", ".mph": ".mph",
+                           "java": ".java", ".java": ".java", "matlab": ".m", "m": ".m", ".m": ".m",
+                           "vba": ".vba", ".vba": ".vba"}
+                if format:
+                    expected = formats.get(format.lower())
+                    if expected is None:
+                        return {"success": False, "error": f"Unsupported save format: {format}"}
+                    if suffix and suffix != expected:
+                        return {"success": False, "error": f"Save format {format} requires {expected}, not {suffix}."}
+                elif suffix not in {"", ".mph", ".java", ".m", ".vba"}:
+                    return {"success": False, "error": "Use a supported .mph/.java/.m/.vba extension or specify format."}
+                Path(file_path).expanduser().resolve().parent.mkdir(parents=True, exist_ok=True)
             model.save(path=file_path, format=format)
             saved_path = file_path or model.file()
             

@@ -16,6 +16,7 @@ DOCUMENTS = {
     "user_execution_rules": ("execution_rules.md", "COMSOL MCP 基本执行点", "COMSOL_MCP_EXECUTION_RULES"),
     "user_modeling_reference": ("modeling_reference.md", "COMSOL 自动建模指南（完整参考）", "COMSOL_MCP_MODELING_REFERENCE"),
     "user_shishvan2021_log": ("shishvan2021_log.md", "Shishvan 2021 工作日志（文献专用）", "COMSOL_MCP_SHISHVAN_LOG"),
+    "electrothermal_calibration": ("electrothermal_calibration.md", "电热标定与独立 MPh 运行经验（按条件唤起）", "COMSOL_MCP_ELECTROTHERMAL_REFERENCE"),
 }
 
 
@@ -37,6 +38,10 @@ def workflow_instructions() -> str:
         "完整来源可通过 docs_get(user_modeling_reference)、"
         "docs_get(user_shishvan2021_log) 或 comsol://workflow/<topic> 读取。\n\n"
         + rules
+        + "\n\n新增条件式经验：实际独立 MPh/HeatTransfer 运行错误、末端解选择/解刷新、"
+        "导出审计，或明确开展电池 P2D 电热标定/温度内阻/恒功率耦合时，"
+        "读取 docs_get('electrothermal_calibration') 或 comsol://workflow/electrothermal_calibration，"
+        "先依据其中唤起条件选择适用条目；不为其他任务套用标定参数、nojac 或电路改写。"
     )
 
 

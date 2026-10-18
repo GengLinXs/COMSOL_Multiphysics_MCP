@@ -13,6 +13,10 @@ documents through `docs_get` and `comsol://workflow/` resources. Paper-specific
 parameters, four-stage solvers and Ztip iteration apply only to their named tasks.
 See [configuration, activation conditions and validation](docs/user-workflows.md).
 
+The fork also includes standalone HeatTransfer/SLF4J startup compatibility,
+validated final-time selection, an explicit `solution_update` tool, save-format
+checks and a conditionally activated electrothermal calibration reference.
+
 ## Star History
 
 [![GitHub stars](https://img.shields.io/github/stars/wjc9011/COMSOL_Multiphysics_MCP?style=social)](https://github.com/wjc9011/COMSOL_Multiphysics_MCP/stargazers)

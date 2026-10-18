@@ -301,6 +301,30 @@ def register_study_tools(mcp: FastMCP) -> None:
         }
     
     @mcp.tool()
+    def solution_update(solution_name: str, model_name: Optional[str] = None) -> dict:
+        """Refresh an existing solution after adding operators used in postprocessing.
+
+        Select an explicit solution tag or unique label. This calls updateSolution(),
+        not runAll(): it does not solve changed equations or make stale fields current.
+        Re-solve if parameters, physics, loads, geometry or mesh changed.
+        """
+        model = session_manager.get_model(model_name)
+        if model is None:
+            return {"success": False, "error": "Model not found."}
+        try:
+            tags = [str(tag) for tag in model.java.sol().tags()]
+            matches = [tag for tag in tags if tag == solution_name]
+            if not matches:
+                matches = [tag for tag in tags if str(model.java.sol(tag).label()) == solution_name]
+            if len(matches) != 1:
+                return {"success": False, "error": "Select one existing solution by tag or unique label.", "available_tags": tags}
+            model.java.sol(matches[0]).updateSolution()
+            return {"success": True, "solution": matches[0], "resolved": False,
+                    "message": "Solution metadata updated; field equations were not re-solved."}
+        except Exception as e:
+            return {"success": False, "error": f"Failed to update solution: {e}"}
+
+    @mcp.tool()
     def solutions_list(model_name: Optional[str] = None) -> dict:
         """
         List all solutions in a model.

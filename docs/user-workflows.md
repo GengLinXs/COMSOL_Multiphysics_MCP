@@ -24,6 +24,7 @@ activate the Shishvan workflow.
 | Nonlocal Ztip iteration | That model is active and nonlocal dislocation-density/impedance self-consistency is required |
 | MATLAB LiveLink | The actual execution path uses MATLAB; existing custom solvers must be verified before `runAll()` |
 | Paper-specific postprocessing | Reproducing that paper's plots, void-nucleation criterion or project checkpoints |
+| Electrothermal calibration and runtime lessons | Standalone HeatTransfer startup, final-solution selection, post-solve operators, export audits, or explicitly requested P2D thermal/DC-temperature/constant-power calibration; use the per-item gates in the new reference |
 
 The Chinese execution checklist contains the complete conditions and all 48
 points. Paper parameters, solver scales, tolerances, geometry and historical
@@ -37,6 +38,7 @@ solves do not establish final self-consistency or completion of the paper reprod
 | `user_execution_rules` | `comsol://workflow/user_execution_rules` |
 | `user_modeling_reference` | `comsol://workflow/user_modeling_reference` |
 | `user_shishvan2021_log` | `comsol://workflow/user_shishvan2021_log` |
+| `electrothermal_calibration` | `comsol://workflow/electrothermal_calibration` |
 
 Documents are bundled under `src/knowledge/user_workflows/` and work without
 PDF embedding dependencies or a vector index. The source documents retain
@@ -55,6 +57,7 @@ refreshed; `docs_get` and resource reads return the current file content.
 COMSOL_MCP_EXECUTION_RULES=/absolute/path/execution_rules.md
 COMSOL_MCP_MODELING_REFERENCE=/absolute/path/modeling_reference.md
 COMSOL_MCP_SHISHVAN_LOG=/absolute/path/shishvan2021_log.md
+COMSOL_MCP_ELECTROTHERMAL_REFERENCE=/absolute/path/electrothermal_calibration.md
 ```
 
 The existing `COMSOL_MCP_VERSION` selects an installed COMSOL version.
@@ -80,3 +83,40 @@ On the original workstation, the local integration also passed a real COMSOL
 solution `u=1`, result evaluation and MPH saving. Maximum absolute error was
 `1.78e-14`. This is evidence for that workstation's basic chain, not a guarantee
 for other licenses/modules or a claim that Shishvan reproduction is complete.
+
+## Runtime fixes from electrothermal modeling
+
+- Standalone MPh can load an OSGi SLF4J binder that breaks HeatTransfer's
+  ASHRAE/SQLite initialization. The JVM-start context expands only the standalone
+  `plugins/*` classpath and omits `org.osgi.slf4j.*` binders. It preserves all
+  other JARs and restores the JPype function after startup, even on error.
+  Set `COMSOL_MCP_STANDALONE_SLF4J=off` to disable; remote `apiplugins/*` is
+  untouched. Restart the MCP process for classpath changes to take effect.
+- Result tools resolve the actual default dataset before MPh 1.4's
+  `inner`/`outer` calls and map `first`/`last`/`end` to actual numeric indices.
+  Numeric inner selections are passed as lists as required by MPh. Use explicit
+  dataset names when multiple study stages exist. Global evaluation rejects
+  multiple/non-finite values instead of silently returning the first time point.
+- `solution_update(solution_name)` refreshes an explicit existing solution after
+  postprocessing operators are added. It never re-solves changed physics; call
+  the appropriate solver after changes to parameters, physics, geometry or mesh.
+- `model_save` rejects explicit format/extension conflicts. Use `.mph` for
+  binary snapshots and `format='Java'` with `.java` for Java source exports.
+- The electrothermal reference documents conditional lessons on protected
+  parameters, zero-resistance limits, double-counted heat, circular constant-power
+  commands, nonlocal Jacobian memory, pulse-edge energy integration and validation
+  boundaries. It contains no private calibration data or fitted values.
+
+Run the focused regressions and a real backend test with the MCP Python:
+
+```bash
+python -m pytest tests -q
+python scripts/check_runtime.py --output /absolute/path/runtime-check --version 6.4
+```
+
+The real check uses a new disposable model: it initializes HeatTransfer,
+solves a transient PDE with known final value, checks multi-value rejection and
+numeric final-index selection, updates a solution, exports MPH/Java, then reloads
+the MPH and checks the final time. It writes logs and a report outside the repo;
+it does not load or alter research models. It requires a valid COMSOL license,
+the HeatTransfer interface and access to COMSOL's user recovery directory.
