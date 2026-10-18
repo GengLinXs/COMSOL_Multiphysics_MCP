@@ -4,6 +4,14 @@
 
 [English](README.md) | 中文
 
+## 本 fork 更新：带唤起条件的用户工作流
+
+新增 48 条建模执行点与明确的唤起条件，并收录完整建模指南及 Shishvan 2021
+复现日志。MCP 初始化时自动提供条件式规则；全文可通过 `docs_get` 和
+`comsol://workflow/` 资源读取。特定文献的参数、四阶段求解器及 Ztip 外循环
+仅在对应任务触发，不能作为其他模型的默认设置。
+配置、适用边界与验证说明见 [用户工作流文档](docs/user-workflows.md)。
+
 ## ⭐ Star History
 
 [![GitHub stars](https://img.shields.io/github/stars/wjc9011/COMSOL_Multiphysics_MCP?style=social)](https://github.com/wjc9011/COMSOL_Multiphysics_MCP/stargazers)

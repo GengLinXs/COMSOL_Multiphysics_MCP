@@ -15,13 +15,14 @@ from .tools.study import register_study_tools
 from .tools.results import register_results_tools
 from .resources.model_resources import register_model_resources
 from .knowledge.embedded import register_knowledge_tools
+from .knowledge.user_workflow import workflow_instructions, register_workflow_resources
 
 logging.basicConfig(level=logging.INFO)
 # MPh logs at INFO level while the JVM starts, which deadlocks with JPype (reproduced on Windows + COMSOL 6.3)
 logging.getLogger('mph').setLevel(logging.WARNING)
 logger = logging.getLogger(__name__)
 
-mcp = FastMCP("COMSOL MCP")
+mcp = FastMCP("COMSOL MCP", instructions=workflow_instructions())
 
 
 def register_all_tools() -> None:
@@ -42,6 +43,7 @@ def register_all_tools() -> None:
 def register_all_resources() -> None:
     """Register all MCP resources."""
     register_model_resources(mcp)
+    register_workflow_resources(mcp)
     logger.info("Registered all resources")
 
 
@@ -58,7 +60,11 @@ def main() -> None:
         # The stdio transport immediately spawns a thread blocked on stdin (fd 0), and
         # JPype's startJVM deadlocks forever while fd 0 is read by another thread, so the
         # JVM must be started before mcp.run() (reproduced on Windows + COMSOL 6.3).
-        logger.info(f"COMSOL pre-start: {session_manager.start()}")
+        cores = os.environ.get("COMSOL_MCP_CORES")
+        info = session_manager.start(cores=int(cores) if cores else None)
+        logger.info("COMSOL pre-start: %s", info)
+        if not info.get("success"):
+            raise RuntimeError(f"COMSOL startup failed: {info}")
     else:
         mcp.settings.host = os.environ.get("COMSOL_MCP_HOST", "127.0.0.1")
         mcp.settings.port = int(os.environ.get("COMSOL_MCP_PORT", "8765"))

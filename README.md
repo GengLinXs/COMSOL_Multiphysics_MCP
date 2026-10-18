@@ -4,6 +4,15 @@ MCP Server for COMSOL Multiphysics simulation automation via AI agents.
 
 English | [中文](README_CN.md)
 
+## Fork additions: conditional user workflows
+
+This fork includes 48 modeling execution points with explicit activation
+conditions, plus the complete modeling guide and Shishvan 2021 work log.
+The server supplies the rules during MCP initialization and exposes all three
+documents through `docs_get` and `comsol://workflow/` resources. Paper-specific
+parameters, four-stage solvers and Ztip iteration apply only to their named tasks.
+See [configuration, activation conditions and validation](docs/user-workflows.md).
+
 ## Star History
 
 [![GitHub stars](https://img.shields.io/github/stars/wjc9011/COMSOL_Multiphysics_MCP?style=social)](https://github.com/wjc9011/COMSOL_Multiphysics_MCP/stargazers)
