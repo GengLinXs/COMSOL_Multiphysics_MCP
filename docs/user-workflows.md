@@ -96,6 +96,33 @@ for other licenses/modules or a claim that Shishvan reproduction is complete.
 
 ## Runtime fixes from electrothermal modeling
 
+## Persistent MPH-server and MATLAB LiveLink operation
+
+For the EWood workstation, the preferred backend is the already running COMSOL
+6.4 MPH Server at `127.0.0.1:2036`. The MCP launcher must not start a second
+COMSOL computation backend when this server is available. Keep the installation
+path explicit (`H:\\COMSOL64\\Multiphysics`) and set `JAVA_HOME` to its bundled
+JRE when a local JVM is required. MPh does not reliably bypass installation
+discovery; do not assume that `mph.Client` alone fixes registry or path
+discovery failures.
+
+Use separate configuration, temporary, recovery, and output directories. A
+connection check must report the layers independently: MCP stdio handshake,
+MATLAB LiveLink user session, MPH Server socket, and model load/read. The
+MATLAB process used for LiveLink must run in the EWood user session; an
+administrator or `SYSTEM` process is not equivalent. Validate model access by
+loading a copy and saving a test copy first. Never overwrite `Pack-sim.mph` or
+other source models during a connectivity check.
+
+For chained electrothermal and thermal-runaway workflows, record the active
+component and study before solving. Enforce a 2 V discharge cutoff and a
+maximum discharge duration of `1.2 h/C`. After electrical discharge, set the
+electrochemical heat source to zero while retaining the Arrhenius side-reaction
+heat source. If a stiff nonlinear solve stops early or reaches the 800 °C
+numerical cap, preserve all exported data and mark the run `partial`; never
+report it as a successful complete validation. A short smoke run is not a
+substitute for a full-rate validation.
+
 - Standalone MPh can load an OSGi SLF4J binder that breaks HeatTransfer's
   ASHRAE/SQLite initialization. The JVM-start context expands only the standalone
   `plugins/*` classpath and omits `org.osgi.slf4j.*` binders. It preserves all

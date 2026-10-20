@@ -62,6 +62,35 @@ class SessionManager:
                 self._models.clear()
                 self._current_model = None
         if self._client is None:
+            # In attach-only mode, never create a new standalone COMSOL
+            # backend.  This is used by the EWood workstation where COMSOL
+            # Server is launched in the user's session on a known port.
+            attach_only = os.environ.get("COMSOL_MCP_ATTACH_ONLY", "0").strip().lower() in {"1", "true", "yes", "on"}
+            if attach_only:
+                host = os.environ.get("COMSOL_MCP_SERVER_HOST", "127.0.0.1")
+                try:
+                    port = int(os.environ.get("COMSOL_MCP_SERVER_PORT", "2036"))
+                except ValueError:
+                    return {"success": False, "error": "COMSOL_MCP_SERVER_PORT must be an integer."}
+                try:
+                    self._client = mph.Client(port=port, host=host)
+                    return {
+                        "success": True,
+                        "version": self._client.version,
+                        "port": port,
+                        "host": host,
+                        "standalone": self._client.standalone,
+                        "message": "Attached to the existing MPH Server; automatic backend startup is disabled.",
+                    }
+                except Exception as e:
+                    return {
+                        "success": False,
+                        "error": (
+                            f"Could not attach to MPH Server at {host}:{port}. "
+                            "Start COMSOL 6.4 MPH Server in the EWood user session, "
+                            f"then retry. Details: {e}"
+                        ),
+                    }
             try:
                 if mph_session.client is not None:
                     self._client = mph_session.client
