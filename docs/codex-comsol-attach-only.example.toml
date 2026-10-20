@@ -1,0 +1,16 @@
+[mcp_servers.comsol]
+command = 'E:\\1. Research\\COMSOL\\.venv-mcp\\Scripts\\python.exe'
+args = ['E:\\1. Research\\COMSOL\\launch_comsol_mcp.py']
+startup_timeout_sec = 180
+tool_timeout_sec = 1800
+enabled = true
+
+[mcp_servers.comsol.env]
+PYTHONUTF8 = '1'
+PYTHONIOENCODING = 'utf-8'
+JAVA_HOME = 'H:\\COMSOL64\\Multiphysics\\java\\win64\\jre'
+COMSOL_MCP_VERSION = '6.4'
+COMSOL_MCP_INSTALLATION = 'H:\\COMSOL64\\Multiphysics'
+COMSOL_MCP_ATTACH_ONLY = '1'
+COMSOL_MCP_SERVER_HOST = '127.0.0.1'
+COMSOL_MCP_SERVER_PORT = '2036'
